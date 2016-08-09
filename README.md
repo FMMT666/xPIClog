@@ -13,6 +13,22 @@ Doesn't feel right, but doesn't hurt either...
 
 ---
 
+## Applications
+
+  - [9V battery test][3]
+  - [1.5V battery test][4]
+  - ...
+
+---
+
+## TODO
+
+  - enable the external trigger mechanism
+  - ...
+
+
+---
+
 ## CHANGES
 
           
@@ -27,3 +43,5 @@ FMMT666(ASkr)
 
 [1]: http://www.sourceboost.com
 [2]: http://www.askrprojects.net/hardware/xpiclog/index.html
+[3]: http://www.askrprojects.net/other/battest/index.html
+[4]: http://www.askrprojects.net/other/battest2/index.html
