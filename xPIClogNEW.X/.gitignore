@@ -1,0 +1,7 @@
+*
+!.gitignore
+
+!/nbproject
+!/nbproject/*
+
+!Makefile

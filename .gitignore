@@ -1,0 +1,10 @@
+*
+!.gitignore
+
+!/xPIClogNEW.X
+!/xPIClogNEW.X/*
+
+!*.c
+!*.h
+!*.mcp
+!*.md
