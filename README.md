@@ -23,7 +23,14 @@ Doesn't feel right, but doesn't hurt either...
 
 ## TODO
 
+  - fix date limits (>31 days)
+  - add command to browse SD-card contents
+  - outsmart Sourceboost to use directories
+  - provided compiled lib (depends on license)
+  - add Scilab scripts for 1V5 and 9V0 measurements
   - enable the external trigger mechanism
+  - update (or rewrite) SD-card library
+  - rewrite for XC8 compiler (maybe)
   - ...
 
 
