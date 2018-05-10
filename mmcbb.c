@@ -488,6 +488,11 @@ DSTATUS disk_initialize(
 	pinInitSD();
 
 
+  // ASkr TODO: FIX BROKEN SAVE
+  // SPI protocol looks good, no difference to a working version (old Sourceboost).
+  // Looks more like a SW issue. Possible stack corruption/overflow/whatever?
+  
+  
 	s = disk_status(drv);
 	if (s & STA_NODISK)
 		return s;

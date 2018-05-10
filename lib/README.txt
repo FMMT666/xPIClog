@@ -1,12 +1,11 @@
 
-Placeholder for your own compiled version of Sourceboost's
+Make sure that Sourceboost does not include any of the standard,
+included libraries from its own LIB directory. This won't work! 
+
+Use this, in here.
 
   LIBC p18large (filename "p18large.lib")
-  
-with switches: -idx 2 -O2 (*2*)
-
-Make sure SourceBoost does not include any of the standard
-versions from its own LIB directory! This won't work! 
+  Compiled switches: -idx 2 -O2
   
 
-ASkr 3/2013
+ASkr 3/2013, 5/2018

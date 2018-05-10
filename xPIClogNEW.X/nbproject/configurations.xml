@@ -89,7 +89,6 @@
         <property key="verbose-mode" value="false"/>
         <property key="warning-level" value="1"/>
         <property key="warnings-as-errors" value="false"/>
-        <appendMe value="-idx 2"/>
       </BoostC>
       <BoostLink>
         <property key="beep-mode" value="false"/>
@@ -99,14 +98,13 @@
         <property key="isr-nocontext" value="false"/>
         <property key="isr-noshadow" value="false"/>
         <property key="memory-model" value="2"/>
-        <property key="optimisation-level" value="1"/>
+        <property key="optimisation-level" value="0"/>
         <property key="s" value="false"/>
         <property key="s1" value="false"/>
         <property key="s2" value="false"/>
         <property key="s3" value="false"/>
         <property key="start-address" value=""/>
         <property key="verbose-mode" value="false"/>
-        <appendMe value="-idx 2"/>
       </BoostLink>
       <ICD3PlatformTool>
         <property key="AutoSelectMemRanges" value="auto"/>
