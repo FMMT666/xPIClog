@@ -4,7 +4,7 @@
 
 
 // version
-#define xVERSION "v0.8b"				// max 6 chars
+#define xVERSION "v0.9"						// max 6 chars
 
 
 // timer0 calculation helper
