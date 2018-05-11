@@ -9,6 +9,8 @@
 !/src/*
 !/old
 !/old/*
+!/nbproject
+!/nbproject/*
 
 !README.md
 !Makefile
