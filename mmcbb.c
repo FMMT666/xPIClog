@@ -61,8 +61,8 @@
 #define DI_L()		latb.5=0	/* Set MMC DI "low" */
 #define DO				portb.4		/* Get MMC DO value (high:true, low:false) */
 
-#define	INS			(1)			/* Card is inserted (yes:true, no:false, default:true) */
-#define	WP			(0)			/* Card is write protected (yes:true, no:false, default:false) */
+#define	INS			 1			/* Card is inserted (yes:true, no:false, default:true) */
+#define	WP			 0			/* Card is write protected (yes:true, no:false, default:false) */
 
 
 
@@ -460,6 +460,11 @@ DSTATUS disk_status (
 		s = STA_NODISK | STA_NOINIT;
 	} else {
 		s &= ~STA_NODISK;
+    
+    // ASkr FIX write error, 5/2018
+    // This was the source of the WRITE ERROR, with newer Sourceboost
+    // versions. WP was defined as (0), but the code "s |= STA_PROTECT;"
+    // was always executed...
 		if (WP)
 			s |= STA_PROTECT;
 		else

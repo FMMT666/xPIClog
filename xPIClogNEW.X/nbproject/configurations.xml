@@ -98,7 +98,7 @@
         <property key="isr-nocontext" value="false"/>
         <property key="isr-noshadow" value="false"/>
         <property key="memory-model" value="2"/>
-        <property key="optimisation-level" value="0"/>
+        <property key="optimisation-level" value="1"/>
         <property key="s" value="false"/>
         <property key="s1" value="false"/>
         <property key="s2" value="false"/>

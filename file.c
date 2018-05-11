@@ -319,10 +319,6 @@ schar filCreateConfig(uchar *fname)
 	if( rc > FR_OK )
 	{
 		f_mount(0, NULL);
-
-    // ASkr DEBUG ONLY
-    serSendStringDebug("*** FAILED AT f_open() CODE:", rc, "\r\n");
-    
 		return -3;
 	}
 

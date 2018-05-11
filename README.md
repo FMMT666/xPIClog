@@ -13,6 +13,13 @@ Doesn't feel right, but doesn't hurt either...
 
 ---
 
+## Compiling
+
+  t.b.c...
+
+
+---
+
 ## Applications
 
   - [9V battery test][3]
@@ -23,11 +30,10 @@ Doesn't feel right, but doesn't hurt either...
 
 ## TODO
 
+  - clean up project structure (MPLabX, src dir, etc...)
   - fix date limits (>31 days)
   - add command to browse SD-card contents
   - outsmart Sourceboost to use directories
-  - provided compiled lib (depends on license)
-  - add Scilab scripts for 1V5 and 9V0 measurements
   - enable the external trigger mechanism
   - update (or rewrite) SD-card library
   - rewrite for XC8 compiler (maybe)
@@ -38,6 +44,9 @@ Doesn't feel right, but doesn't hurt either...
 
 ## CHANGES
 
+### V0.9
+    - new project files for MPLabX
+    - modifications for newer Sourceboost compiler versions
           
 ### V0.8a
     - LED now on in MENU MODE (half brightness)
