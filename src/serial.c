@@ -62,7 +62,7 @@ void serUsage()
 	serSendString(" start            - start acquisition\r\n");
 	serSendString(" stop|ESC         - stop acquisition (only valid if not sleeping)\r\n");
 	serSendString(" show             - show acquisition parameters\r\n");
-	serSendString(" fname=<filename> - set log and config file name (max 8 chars/digits)\r\n");	
+	serSendString(" fname=<filename> - set log and config file name w/o extension (max 8 chars/digits)\r\n");	
 	serSendString(" fname?           - show log and config file name\r\n");
 	serSendString(" load             - load acquisition parameters from SD-card file '<fname>.cfg'\r\n");
 	serSendString(" save             - save acquisition parameters to SD-card file '<fname>.cfg'\r\n");	
@@ -650,7 +650,9 @@ uchar cmdCheck(uchar exec)
 				serSendString("ERROR\r\n");
 				break;
 			}
+      // TODO: either error checks in here or return code upon illegal stuff in rtcSetDate()
 			rtcSetDate(a[2],a[1],a[0]);
+      
 			// continue with next CASE below (DATEQUERY)...
 		
 		//----------------------------------------------------------------------------------

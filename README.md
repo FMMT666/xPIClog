@@ -30,10 +30,10 @@ Doesn't feel right, but doesn't hurt either...
 
 ## TODO
 
-  - clean up project structure (MPLabX, src dir, etc...)
   - fix date limits (>31 days)
+  - fix other things
+  - update to newest FatFs
   - add command to browse SD-card contents
-  - outsmart Sourceboost to use directories
   - enable the external trigger mechanism
   - update (or rewrite) SD-card library
   - rewrite for XC8 compiler (maybe)

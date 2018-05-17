@@ -448,15 +448,19 @@ void rtcSetTime(uchar hour, uchar minute, uchar second)
 //**************************************************************************************
 void rtcSetDate(uchar year, uchar month, uchar day)
 {
+  // That's all crap...
 	if(year > 99)
 		year = 99;
 	if(month > 12)
 		month = 12;
+  if(month == 0 )
+    month = 1;
 	if(day > 31) // TODO
-		day = 0;
+		day = 1;
 	
 	while( rtccfg.RTCSYNC )
 	{;}
+  // conversion should be done in the rtcSet() functions.
 	rtcSetYear(rtcDEC2BCD(year));
 	rtcSetMonth(rtcDEC2BCD(month));
 	rtcSetDay(rtcDEC2BCD(day));
