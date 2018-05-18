@@ -10,7 +10,7 @@
 // - real time clock
 // - other timing functions
 //--------------------------------------------------------------------------------------
-// (c)ASkr 2011
+// (c)ASkr 2011, 2018
 
 
 
@@ -150,6 +150,7 @@ void rtcInterrupt()
 //**************************************************************************************
 void rtcSetYear(uchar year)
 {
+  year = rtcDEC2BCD(year);
 	rtccfg |= 0b11;
 	rtcvall = year;
 }	
@@ -164,7 +165,7 @@ void rtcSetYear(uchar year)
 uchar rtcGetYear()
 {
 	rtccfg |= 0b11;
-	return rtcvall;
+	return rtcBCD2DEC(rtcvall);
 }	
 
 
@@ -176,6 +177,7 @@ uchar rtcGetYear()
 //**************************************************************************************
 void rtcSetMonth(uchar month)
 {
+  month = rtcDEC2BCD(month);
 	rtccfg &= 0b11111100;
 	rtccfg |= 0b10;
 	rtcvalh = month;
@@ -192,7 +194,7 @@ uchar rtcGetMonth()
 {
 	rtccfg &= 0b11111100;
 	rtccfg |= 0b10;
-	return rtcvalh;
+	return rtcBCD2DEC(rtcvalh);
 }	
 
 
@@ -204,6 +206,7 @@ uchar rtcGetMonth()
 //**************************************************************************************
 void rtcSetDay(uchar day)
 {
+  day = rtcDEC2BCD(day);
 	rtccfg &= 0b11111100;
 	rtccfg |= 0b10;
 	rtcvall = day;
@@ -220,7 +223,7 @@ uchar rtcGetDay()
 {
 	rtccfg &= 0b11111100;
 	rtccfg |= 0b10;
-	return rtcvall;
+	return rtcBCD2DEC(rtcvall);
 }	
 
 
@@ -232,6 +235,7 @@ uchar rtcGetDay()
 //**************************************************************************************
 void rtcSetHour(uchar hour)
 {
+  hour = rtcDEC2BCD(hour);
 	rtccfg &= 0b11111100;
 	rtccfg |= 0b01;
 	rtcvall = hour;
@@ -248,7 +252,7 @@ uchar rtcGetHour()
 {
 	rtccfg &= 0b11111100;
 	rtccfg |= 0b01;
-	return rtcvall;
+	return rtcBCD2DEC(rtcvall);
 }	
 
 
@@ -259,6 +263,7 @@ uchar rtcGetHour()
 //**************************************************************************************
 void rtcSetMinute(uchar minute)
 {
+  minute = rtcDEC2BCD(minute);
 	rtccfg &= 0b11111100;
 	rtcvalh = minute;
 }	
@@ -273,7 +278,7 @@ void rtcSetMinute(uchar minute)
 uchar rtcGetMinute(void)
 {
 	rtccfg &= 0b11111100;
-	return rtcvalh;
+	return rtcBCD2DEC(rtcvalh);
 }	
 
 
@@ -285,6 +290,7 @@ uchar rtcGetMinute(void)
 //**************************************************************************************
 void rtcSetSecond(uchar second)
 {
+  second = rtcDEC2BCD(second);
 	rtccfg &= 0b11111100;
 	rtcvall = second;
 }	
@@ -299,7 +305,7 @@ void rtcSetSecond(uchar second)
 uchar rtcGetSecond()
 {
 	rtccfg &= 0b11111100;
-	return rtcvall;
+	return rtcBCD2DEC(rtcvall);
 }	
 
 
@@ -311,6 +317,7 @@ uchar rtcGetSecond()
 //**************************************************************************************
 void rtcSetAlarmHour(uchar hour)
 {
+  hour = rtcDEC2BCD(hour);
 	alrmcfg &= 0b11111100;
 	alrmcfg |= 0b01;
 	alrmvall = hour;
@@ -325,6 +332,7 @@ void rtcSetAlarmHour(uchar hour)
 //**************************************************************************************
 uchar rtcGetAlarmHour()
 {
+  // TODO: return a decimal number, not bcd
 	alrmcfg &= 0b11111100;
 	alrmcfg |= 0b01;
 	return alrmvall;
@@ -338,6 +346,7 @@ uchar rtcGetAlarmHour()
 //**************************************************************************************
 void rtcSetAlarmMinute(uchar minute)
 {
+  minute = rtcDEC2BCD(minute);
 	alrmcfg &= 0b11111100;
 	alrmvalh = minute;
 }	
@@ -351,6 +360,7 @@ void rtcSetAlarmMinute(uchar minute)
 //**************************************************************************************
 uchar rtcGetAlarmMinute(void)
 {
+  // TODO: return a decimal number, not bcd
 	alrmcfg &= 0b11111100;
 	return alrmvalh;
 }	
@@ -364,6 +374,7 @@ uchar rtcGetAlarmMinute(void)
 //**************************************************************************************
 void rtcSetAlarmSecond(uchar second)
 {
+  second = rtcDEC2BCD(second);
 	alrmcfg &= 0b11111100;
 	alrmvall = second;
 }	
@@ -377,6 +388,7 @@ void rtcSetAlarmSecond(uchar second)
 //**************************************************************************************
 uchar rtcGetAlarmSecond()
 {
+  // TODO: return a decimal number, not bcd
 	alrmcfg &= 0b11111100;
 	return alrmvall;
 }	
@@ -425,18 +437,12 @@ uchar rtcDEC2BCD(uchar dec)
 //**************************************************************************************
 void rtcSetTime(uchar hour, uchar minute, uchar second)
 {
-	if(hour > 23)
-		hour = 0;
-	if(minute > 59)
-		minute = 0;
-	if(second > 59)
-		second = 0;
-	
 	while( rtccfg.RTCSYNC )
 	{;}
-	rtcSetHour(rtcDEC2BCD(hour));
-	rtcSetMinute(rtcDEC2BCD(minute));
-	rtcSetSecond(rtcDEC2BCD(second));
+
+	rtcSetHour(hour);
+	rtcSetMinute(minute);
+	rtcSetSecond(second);
 }
 
 
@@ -448,22 +454,12 @@ void rtcSetTime(uchar hour, uchar minute, uchar second)
 //**************************************************************************************
 void rtcSetDate(uchar year, uchar month, uchar day)
 {
-  // That's all crap...
-	if(year > 99)
-		year = 99;
-	if(month > 12)
-		month = 12;
-  if(month == 0 )
-    month = 1;
-	if(day > 31) // TODO
-		day = 1;
-	
 	while( rtccfg.RTCSYNC )
 	{;}
-  // conversion should be done in the rtcSet() functions.
-	rtcSetYear(rtcDEC2BCD(year));
-	rtcSetMonth(rtcDEC2BCD(month));
-	rtcSetDay(rtcDEC2BCD(day));
+
+	rtcSetYear(year);
+	rtcSetMonth(month);
+	rtcSetDay(day);
 }
 
 
@@ -482,13 +478,13 @@ void rtcGetTimeString(uchar *tstr)
 	while( rtccfg.RTCSYNC )
 	{;}
 
-	sprintf((uchar *)tmp,"%02d",rtcBCD2DEC(rtcGetHour()));
+	sprintf((uchar *)tmp,"%02d", rtcGetHour() );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	strcat((uchar *)tstr,":");
-	sprintf((uchar *)tmp,"%02d",rtcBCD2DEC(rtcGetMinute()));
+	sprintf((uchar *)tmp,"%02d", rtcGetMinute() );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	strcat((uchar *)tstr,":");
-	sprintf((uchar *)tmp,"%02d",rtcBCD2DEC(rtcGetSecond()));
+	sprintf((uchar *)tmp,"%02d", rtcGetSecond() );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	
 }	
@@ -509,13 +505,13 @@ void rtcGetDateString(uchar *tstr)
 	while( rtccfg.RTCSYNC )
 	{;}
 
-	sprintf((uchar *)tmp,"%02d",rtcBCD2DEC(rtcGetDay()));
+	sprintf((uchar *)tmp,"%02d", rtcGetDay() );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	strcat((uchar *)tstr,".");
-	sprintf((uchar *)tmp,"%02d",rtcBCD2DEC(rtcGetMonth()));
+	sprintf((uchar *)tmp,"%02d", rtcGetMonth() );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	strcat((uchar *)tstr,".20");
-	sprintf((uchar *)tmp,"%02d",rtcBCD2DEC(rtcGetYear()));
+	sprintf((uchar *)tmp,"%02d", rtcGetYear() );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	
 }	
@@ -535,9 +531,9 @@ uchar rtcGetTime(uchar unit)
 	switch(unit)
 	{
 		//------------------------------------------
-		case SECONDS: return rtcBCD2DEC(rtcGetSecond());
-		case MINUTES: return rtcBCD2DEC(rtcGetMinute());
-		case HOURS:   return rtcBCD2DEC(rtcGetHour());
+		case SECONDS: return rtcGetSecond();
+		case MINUTES: return rtcGetMinute();
+		case HOURS:   return rtcGetHour();
 		default:			return 0;
 	}		
 }	
@@ -553,12 +549,12 @@ void rtcGetTime2DaTi()
 	while( rtccfg.RTCSYNC )
 	{;}
 	
-	vDaTi[0]=rtcBCD2DEC(rtcGetYear());
-	vDaTi[1]=rtcBCD2DEC(rtcGetMonth());
-	vDaTi[2]=rtcBCD2DEC(rtcGetDay());
-	vDaTi[3]=rtcBCD2DEC(rtcGetHour());
-	vDaTi[4]=rtcBCD2DEC(rtcGetMinute());
-	vDaTi[5]=rtcBCD2DEC(rtcGetSecond());
+	vDaTi[0] = rtcGetYear();
+	vDaTi[1] = rtcGetMonth();
+	vDaTi[2] = rtcGetDay();
+	vDaTi[3] = rtcGetHour();
+	vDaTi[4] = rtcGetMinute();
+	vDaTi[5] = rtcGetSecond();
 }
 	
 
@@ -574,13 +570,13 @@ uchar *rtcGetDateStringDaTi(uchar *tstr)
 
 	*tstr = 0;
 
-	sprintf((uchar *)tmp,"%02d",vDaTi[2]);
+	sprintf((uchar *)tmp,"%02d", vDaTi[2] );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	strcat((uchar *)tstr,".");
-	sprintf((uchar *)tmp,"%02d",vDaTi[1]);
+	sprintf((uchar *)tmp,"%02d", vDaTi[1] );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	strcat((uchar *)tstr,".20");
-	sprintf((uchar *)tmp,"%02d",vDaTi[0]);
+	sprintf((uchar *)tmp,"%02d", vDaTi[0] );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	
 	return tstr;
@@ -599,13 +595,13 @@ uchar *rtcGetTimeStringDaTi(uchar *tstr)
 
 	*tstr = 0;
 
-	sprintf((uchar *)tmp,"%02d",vDaTi[3]);
+	sprintf((uchar *)tmp,"%02d", vDaTi[3] );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	strcat((uchar *)tstr,":");
-	sprintf((uchar *)tmp,"%02d",vDaTi[4]);
+	sprintf((uchar *)tmp,"%02d", vDaTi[4] );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	strcat((uchar *)tstr,":");
-	sprintf((uchar *)tmp,"%02d",vDaTi[5]);
+	sprintf((uchar *)tmp,"%02d", vDaTi[5] );
 	strcat((uchar *)tstr,(uchar *)&tmp);
 	
 	return tstr;
@@ -640,7 +636,7 @@ schar rtcSetAlarm(uchar unit, unsigned value)
 					ch = rtcGetTime(SECONDS);
 					if( ++ch > 9 )
 						ch = 0;
-					rtcSetAlarmSecond(rtcDEC2BCD(ch));
+					rtcSetAlarmSecond(ch);
 					sCfg.rtcWakeUpSkip = value/10;		// number of "wake-ups" without action
 					sCfg.crdWriteSkip = WRITEAFTERSECONDS/10;
 				}
@@ -666,7 +662,7 @@ schar rtcSetAlarm(uchar unit, unsigned value)
 					ch = rtcGetTime(MINUTES);
 					if( ++ch > 9 )
 						ch = 0;
-					rtcSetAlarmMinute(rtcDEC2BCD(ch));
+					rtcSetAlarmMinute(ch);
 					sCfg.rtcWakeUpSkip = value/10;		// number of "wake-ups" without action
 					sCfg.crdWriteSkip = WRITEAFTERMINUTES/10;
 				}
@@ -691,6 +687,7 @@ schar rtcSetAlarm(uchar unit, unsigned value)
 			} break;
 		//------------------------------------------
 		default:
+      break;
 	}		
 
 

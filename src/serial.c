@@ -68,7 +68,7 @@ void serUsage()
 	serSendString(" save             - save acquisition parameters to SD-card file '<fname>.cfg'\r\n");	
 	serSendString(" time=<hh:mm:ss>  - set time\r\n");	
 	serSendString(" time?            - query time\r\n");	
-	serSendString(" date=<dd:mm:yy>  - set date\r\n");	
+	serSendString(" date=<dd.mm.yy>  - set date\r\n");	
 	serSendString(" date?            - query date\r\n");	
 	serSendString(" sleep=<0|1>      - sleep during acqusition? 0=NO, 1=YES\r\n");	
 	serSendString(" sleep?           - show sleep flag\r\n");	
