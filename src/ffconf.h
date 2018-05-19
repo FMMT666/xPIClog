@@ -2,8 +2,6 @@
 // ASkr 3/2011:
 // SourceBoost & PIC18 mods
 
-
-
 /*---------------------------------------------------------------------------/
 /  FatFs - FAT file system module configuration file  R0.08b (C)ChaN, 2011
 /----------------------------------------------------------------------------/
@@ -19,16 +17,6 @@
 /*---------------------------------------------------------------------------/
 / Function and Buffer Configurations
 /----------------------------------------------------------------------------*/
-
-
-
-//
-// DO NOT CHANGE ANY OF THESE SETTINGS!
-// ASkr
-//
-
-
-
 
 #define	_FS_TINY		1	/* 0:Normal or 1:Tiny */
 /* When _FS_TINY is set to 1, FatFs uses the sector buffer in the file system
@@ -52,10 +40,6 @@
 /   3: f_lseek is removed in addition to 2. */
 
 
-// added by ASkr
-#define _USE_FPRINTF   0  // 0=disabled; 1=enable (NOTE: requires extra code!)
-
-
 #define	_USE_STRFUNC	1	/* 0:Disable or 1/2:Enable */
 /* To enable string functions, set _USE_STRFUNC to 1 or 2. */
 
@@ -71,6 +55,8 @@
 #define	_USE_FASTSEEK	0	/* 0:Disable or 1:Enable */
 /* To enable fast seek feature, set _USE_FASTSEEK to 1. */
 
+// added by ASkr
+#define _USE_FPRINTF   0  // 0=disabled; 1=enable (NOTE: requires extra code!)
 
 
 /*---------------------------------------------------------------------------/

@@ -40,8 +40,6 @@ DRESULT disk_ioctl (BYTE, BYTE, void*);
 void pinInitSD();
 void pinExitSD();
 
-
-
 /* Disk Status Bits (DSTATUS) */
 
 #define STA_NOINIT		0x01	/* Drive not initialized */

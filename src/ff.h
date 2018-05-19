@@ -2,8 +2,6 @@
 // ASkr 3/2011:
 // SourceBoost & PIC18 mods
 
-
-
 /*---------------------------------------------------------------------------/
 /  FatFs - FAT file system module include file  R0.08b    (C)ChaN, 2011
 /----------------------------------------------------------------------------/
@@ -78,8 +76,8 @@ typedef char TCHAR;
 
 
 
-
 /* File system object structure (FATFS) */
+
 typedef struct {
 	BYTE	fs_type;		/* FAT sub-type (0:Not mounted) */
 	BYTE	drv;			/* Physical drive number */
@@ -109,17 +107,12 @@ typedef struct {
 	DWORD	dirbase;		/* Root directory start sector (FAT32:Cluster#) */
 	DWORD	database;		/* Data start sector */
 	DWORD	winsect;		/* Current sector appearing in the win[] */
-	
 
 	// changed by ASkr
 	// SourceBoost can't handle structs, larger than one block of memory (256 bytes)
 //	BYTE	win[_MAX_SS];	/* Disk access window for Directory, FAT (and Data on tiny cfg) */
-
 	BYTE *win;
-	
 } FATFS;
-
-
 
 
 
@@ -145,15 +138,9 @@ typedef struct {
 #if _FS_SHARE
 	UINT	lockid;			/* File lock ID (index of file semaphore table) */
 #endif
-
-
-
 #if !_FS_TINY
 	BYTE	buf[_MAX_SS];	/* File data read/write buffer */
 #endif
-
-
-
 } FIL;
 
 
@@ -239,22 +226,16 @@ FRESULT	f_mkdir (const TCHAR*);						/* Create a new directory */
 FRESULT f_chmod (const TCHAR*, BYTE, BYTE);			/* Change attriburte of the file/dir */
 FRESULT f_utime (const TCHAR*, const FILINFO*);		/* Change timestamp of the file/dir */
 FRESULT f_rename (const TCHAR*, const TCHAR*);		/* Rename/Move a file or directory */
-
+// ASkr TODO: There must have been a reason why I did this...
 //FRESULT f_forward (FIL*, UINT(*)(const BYTE*,UINT), UINT, UINT*);	/* Forward data to the stream */
-
 FRESULT f_mkfs (BYTE, BYTE, UINT);					/* Create a file system on the drive */
 FRESULT f_chdrive (BYTE);							/* Change current drive */
 FRESULT f_chdir (const TCHAR*);						/* Change current directory */
 FRESULT f_getcwd (TCHAR*, UINT);					/* Get current directory */
 int f_putc (TCHAR, FIL*);							/* Put a character to the file */
 int f_puts (const TCHAR*, FIL*);					/* Put a string to the file */
-
-
-
+// ASkr TODO: There must have been a reason why I did this...
 //int f_printf (FIL*, const TCHAR*, ...);				/* Put a formatted string to the file */
-
-
-
 TCHAR* f_gets (TCHAR*, int, FIL*);					/* Get a string from the file */
 
 #ifndef EOF
