@@ -13,6 +13,16 @@ Doesn't feel right, but doesn't hurt either...
 
 ---
 
+## News
+
+  Currently (5/2018) under heavy maintenance.  
+  For working code, use branch
+
+    V09_with_FatFs08b
+
+
+---
+
 ## Compiling
 
   t.b.c...

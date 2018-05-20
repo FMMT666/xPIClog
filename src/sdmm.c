@@ -1,37 +1,33 @@
-
-// ASkr 3/2011:
-// SourceBoost & PIC18 mods
-
-
 /*------------------------------------------------------------------------/
-/  Bitbanging MMCv3/SDv1/SDv2 (in SPI mode) control module
+/  Foolproof MMCv3/SDv1/SDv2 (in SPI mode) control module
 /-------------------------------------------------------------------------/
 /
-/  Copyright (C) 2010, ChaN, all right reserved.
+/  Copyright (C) 2013, ChaN, all right reserved.
 /
 / * This software is a free software and there is NO WARRANTY.
 / * No restriction on use. You can use, modify and redistribute it for
 /   personal, non-profit or commercial products UNDER YOUR RESPONSIBILITY.
 / * Redistributions of source code must retain the above copyright notice.
 /
-/--------------------------------------------------------------------------/
- Features and Limitations:
+/-------------------------------------------------------------------------/
+  Features and Limitations:
 
- * Very Easy to Port
-   It uses only 4-6 bit of GPIO port. No interrupt, no SPI port is used.
+  * Easy to Port Bit-banging SPI
+    It uses only four GPIO pins. No complex peripheral needs to be used.
 
- * Platform Independent
-   You need to modify only a few macros to control GPIO ports.
+  * Platform Independent
+    You need to modify only a few macros to control the GPIO port.
 
- * Low Speed
-   The data transfer rate will be several times slower than hardware SPI.
+  * Low Speed
+    The data transfer rate will be several times slower than hardware SPI.
 
- * No Media Change Detection
-   Application program must re-mount the volume after media change or it
-   results a hard error.
+  * No Media Change Detection
+    Application program needs to perform a f_mount() after media change.
 
 /-------------------------------------------------------------------------*/
 
+
+#include "diskio.h"		/* Common include file for FatFs and disk I/O layer */
 
 
 // ASkr
@@ -42,27 +38,68 @@
 #include "serial.h"
 
 
-
-#include "diskio.h"		/* Common include file for FatFs and disk I/O layer */
-
-
-
-
-#define DLY_US(n)	dly_us(n)	/* Delay n microseconds */
+/*-------------------------------------------------------------------------*/
+/* Platform dependent macros and functions needed to be modified           */
+/*-------------------------------------------------------------------------*/
 
 
-// ASkr
-// REMEMBER TO CHANGE init_ports() TOO!
-#define	CS_H()		latb.7=1	/* Set MMC CS "high" */
-#define CS_L()		latb.7=0	/* Set MMC CS "low" */
-#define CK_H()		latb.6=1	/* Set MMC SCLK "high" */
-#define	CK_L()		latb.6=0	/* Set MMC SCLK "low" */
-#define DI_H()		latb.5=1	/* Set MMC DI "high" */
-#define DI_L()		latb.5=0	/* Set MMC DI "low" */
-#define DO				portb.4		/* Get MMC DO value (high:true, low:false) */
 
-#define	INS			 1			/* Card is inserted (yes:true, no:false, default:true) */
-#define	WP			 0			/* Card is write protected (yes:true, no:false, default:false) */
+#define DO_INIT()								/* Initialize port for MMC DO as input */
+#define DO				portb.4				/* Test for MMC DO ('H':true, 'L':false) */
+
+#define DI_INIT()								/* Initialize port for MMC DI as output */
+#define DI_H()		latb.5=1			/* Set MMC DI "high" */
+#define DI_L()		latb.5=0			/* Set MMC DI "low" */
+
+#define CK_INIT()								/* Initialize port for MMC SCLK as output */
+#define CK_H()		latb.6=1			/* Set MMC SCLK "high" */
+#define	CK_L()		latb.6=0			/* Set MMC SCLK "low" */
+
+#define CS_INIT()								/* Initialize port for MMC CS as output */
+#define	CS_H()		latb.7=1			/* Set MMC CS "high" */
+#define CS_L()		latb.7=0			/* Set MMC CS "low" */
+
+
+
+
+static
+void dly_us (UINT n)	/* Delay n microseconds (avr-gcc -Os) */
+{
+
+	// changed by ASkr (fake delay for SourceBoost)
+	unsigned int i,j;
+	
+	for(j=0;j<n;j++)
+	{
+	}
+
+/*
+	do {
+		PINB;
+#if F_CPU >= 6000000
+		PINB;
+#endif
+#if F_CPU >= 7000000
+		PINB;
+#endif
+#if F_CPU >= 8000000
+		PINB;
+#endif
+#if F_CPU >= 9000000
+		PINB;
+#endif
+#if F_CPU >= 10000000
+		PINB;
+#endif
+#if F_CPU >= 12000000
+		PINB; PINB;
+#endif
+#if F_CPU >= 14000000
+#error Too fast clock
+#endif
+	} while (--n);
+*/	
+}
 
 
 
@@ -80,6 +117,7 @@
 #define CMD9	(9)			/* SEND_CSD */
 #define CMD10	(10)		/* SEND_CID */
 #define CMD12	(12)		/* STOP_TRANSMISSION */
+#define CMD13	(13)		/* SEND_STATUS */
 #define ACMD13	(0x80+13)	/* SD_STATUS (SDC) */
 #define CMD16	(16)		/* SET_BLOCKLEN */
 #define CMD17	(17)		/* READ_SINGLE_BLOCK */
@@ -88,40 +126,18 @@
 #define	ACMD23	(0x80+23)	/* SET_WR_BLK_ERASE_COUNT (SDC) */
 #define CMD24	(24)		/* WRITE_BLOCK */
 #define CMD25	(25)		/* WRITE_MULTIPLE_BLOCK */
-#define CMD41	(41)		/* SEND_OP_COND (ACMD) */
+#define CMD32	(32)		/* ERASE_ER_BLK_START */
+#define CMD33	(33)		/* ERASE_ER_BLK_END */
+#define CMD38	(38)		/* ERASE */
 #define CMD55	(55)		/* APP_CMD */
 #define CMD58	(58)		/* READ_OCR */
 
-/* Card type flags (CardType) */
-#define CT_MMC		0x01		/* MMC ver 3 */
-#define CT_SD1		0x02		/* SD ver 1 */
-#define CT_SD2		0x04		/* SD ver 2 */
-#define CT_SDC		(CT_SD1|CT_SD2)	/* SD */
-#define CT_BLOCK	0x08		/* Block addressing */
 
-static DSTATUS Stat = STA_NOINIT;	/* Disk status */
+static
+DSTATUS Stat = STA_NOINIT;	/* Disk status */
 
-static BYTE CardType;			/* b0:MMC, b1:SDv1, b2:SDv2, b3:Block addressing */
-
-
-
-
-
-// ASkr TODO
-// Nur ne Notlösung zum testen ;-)
-void dly_us(unsigned int ti)
-{
-	unsigned int i,j;
-	
-	for(j=0;j<ti;j++)
-	{
-	}
-}
-
-
-
-
-
+static
+BYTE CardType;			/* b0:MMC, b1:SDv1, b2:SDv2, b3:Block addressing */
 
 
 //**************************************************************************************
@@ -162,19 +178,10 @@ void pinExitSD()
 
 
 
-
-
-
-
-
-
-
-
-
-
 /*-----------------------------------------------------------------------*/
-/* Transmit bytes to the MMC (bitbanging)                                */
+/* Transmit bytes to the card (bitbanging)                               */
 /*-----------------------------------------------------------------------*/
+
 static
 void xmit_mmc (
 	const BYTE* buff,	/* Data to be sent */
@@ -187,27 +194,28 @@ void xmit_mmc (
 	do {
 		d = *buff++;	/* Get a byte to be sent */
 		if (d & 0x80) DI_H(); else DI_L();	/* bit7 */
-		CK_H();  CK_L();
+		CK_H(); CK_L();
 		if (d & 0x40) DI_H(); else DI_L();	/* bit6 */
-		CK_H();  CK_L();
+		CK_H(); CK_L();
 		if (d & 0x20) DI_H(); else DI_L();	/* bit5 */
-		CK_H();  CK_L();
+		CK_H(); CK_L();
 		if (d & 0x10) DI_H(); else DI_L();	/* bit4 */
-		CK_H();  CK_L();
+		CK_H(); CK_L();
 		if (d & 0x08) DI_H(); else DI_L();	/* bit3 */
-		CK_H();  CK_L();
+		CK_H(); CK_L();
 		if (d & 0x04) DI_H(); else DI_L();	/* bit2 */
-		CK_H();  CK_L();
+		CK_H(); CK_L();
 		if (d & 0x02) DI_H(); else DI_L();	/* bit1 */
-		CK_H();  CK_L();
+		CK_H(); CK_L();
 		if (d & 0x01) DI_H(); else DI_L();	/* bit0 */
-		CK_H();  CK_L();
+		CK_H(); CK_L();
 	} while (--bc);
 }
 
 
+
 /*-----------------------------------------------------------------------*/
-/* Receive bytes from the MMC (bitbanging)                               */
+/* Receive bytes from the card (bitbanging)                              */
 /*-----------------------------------------------------------------------*/
 
 static
@@ -222,22 +230,22 @@ void rcvr_mmc (
 	DI_H();	/* Send 0xFF */
 
 	do {
-		r = 0;   if (DO) r++;	/* bit7 */
-		CK_H();  CK_L(); 
+		r = 0;	 if (DO) r++;	/* bit7 */
+		CK_H(); CK_L();
 		r <<= 1; if (DO) r++;	/* bit6 */
-		CK_H();  CK_L(); 
+		CK_H(); CK_L();
 		r <<= 1; if (DO) r++;	/* bit5 */
-		CK_H();  CK_L(); 
+		CK_H(); CK_L();
 		r <<= 1; if (DO) r++;	/* bit4 */
-		CK_H();  CK_L(); 
+		CK_H(); CK_L();
 		r <<= 1; if (DO) r++;	/* bit3 */
-		CK_H();  CK_L(); 
+		CK_H(); CK_L();
 		r <<= 1; if (DO) r++;	/* bit2 */
-		CK_H();  CK_L(); 
+		CK_H(); CK_L();
 		r <<= 1; if (DO) r++;	/* bit1 */
-		CK_H();  CK_L(); 
+		CK_H(); CK_L();
 		r <<= 1; if (DO) r++;	/* bit0 */
-		CK_H();  CK_L(); 
+		CK_H(); CK_L();
 		*buff++ = r;			/* Store a received byte */
 	} while (--bc);
 }
@@ -253,16 +261,15 @@ int wait_ready (void)	/* 1:OK, 0:Timeout */
 {
 	BYTE d;
 	UINT tmr;
-	
-	for (tmr = 5000; tmr; tmr--)
-	{	/* Wait for ready in timeout of 500ms */
+
+
+	for (tmr = 5000; tmr; tmr--) {	/* Wait for ready in timeout of 500ms */
 		rcvr_mmc(&d, 1);
-		if (d == 0xFF)
-			return 1;
-		DLY_US(100);
+		if (d == 0xFF) break;
+		dly_us(100);
 	}
-	
-	return 0;
+
+	return tmr ? 1 : 0;
 }
 
 
@@ -276,8 +283,8 @@ void deselect (void)
 {
 	BYTE d;
 
-	CS_H();
-	rcvr_mmc(&d, 1);
+	CS_H();				/* Set CS# high */
+	rcvr_mmc(&d, 1);	/* Dummy clock (force DO hi-z for multiple slave SPI) */
 }
 
 
@@ -289,19 +296,20 @@ void deselect (void)
 static
 int select (void)	/* 1:OK, 0:Timeout */
 {
-	CS_L();
-	if (!wait_ready())
-	{
-		deselect();
-		return 0;
-	}
-	return 1;
+	BYTE d;
+
+	CS_L();				/* Set CS# low */
+	rcvr_mmc(&d, 1);	/* Dummy clock (force DO enabled) */
+	if (wait_ready()) return 1;	/* Wait for card ready */
+
+	deselect();
+	return 0;			/* Failed */
 }
 
 
 
 /*-----------------------------------------------------------------------*/
-/* Receive a data packet from MMC                                        */
+/* Receive a data packet from the card                                   */
 /*-----------------------------------------------------------------------*/
 
 static
@@ -314,15 +322,12 @@ int rcvr_datablock (	/* 1:OK, 0:Failed */
 	UINT tmr;
 
 
-	for (tmr = 1000; tmr; tmr--)
-	{	/* Wait for data packet in timeout of 100ms */
+	for (tmr = 1000; tmr; tmr--) {	/* Wait for data packet in timeout of 100ms */
 		rcvr_mmc(d, 1);
-		if (d[0] != 0xFF)
-			break;
-		DLY_US(100);
+		if (d[0] != 0xFF) break;
+		dly_us(100);
 	}
-	if (d[0] != 0xFE)
-		return 0;		/* If not valid data token, retutn with error */
+	if (d[0] != 0xFE) return 0;		/* If not valid data token, return with error */
 
 	rcvr_mmc(buff, btr);			/* Receive the data block into buffer */
 	rcvr_mmc(d, 2);					/* Discard CRC */
@@ -333,7 +338,7 @@ int rcvr_datablock (	/* 1:OK, 0:Failed */
 
 
 /*-----------------------------------------------------------------------*/
-/* Send a data packet to MMC                                             */
+/* Send a data packet to the card                                        */
 /*-----------------------------------------------------------------------*/
 
 static
@@ -351,7 +356,7 @@ int xmit_datablock (	/* 1:OK, 0:Failed */
 	xmit_mmc(d, 1);				/* Xmit a token */
 	if (token != 0xFD) {		/* Is it data token? */
 		xmit_mmc(buff, 512);	/* Xmit the 512 byte data block to MMC */
-		rcvr_mmc(d, 2);			/* Dummy CRC (FF,FF) */
+		rcvr_mmc(d, 2);			/* Xmit dummy CRC (0xFF,0xFF) */
 		rcvr_mmc(d, 1);			/* Receive data response */
 		if ((d[0] & 0x1F) != 0x05)	/* If not accepted, return with error */
 			return 0;
@@ -363,54 +368,29 @@ int xmit_datablock (	/* 1:OK, 0:Failed */
 
 
 /*-----------------------------------------------------------------------*/
-/* Send a command packet to MMC                                          */
+/* Send a command packet to the card                                     */
 /*-----------------------------------------------------------------------*/
 
 static
-BYTE send_cmd(/* Returns command response (bit7==1:Send failed)*/
+BYTE send_cmd (		/* Returns command response (bit7==1:Send failed)*/
 	BYTE cmd,		/* Command byte */
 	DWORD arg		/* Argument */
 )
 {
 	BYTE n, d, buf[6];
 
-	// ASkr
-	BYTE cmd2;
-	DWORD arg2;
 
-	// ASkr
-	// THIS DOES NOT WORK WITH SOURCEBOOST!
-/*
-	if (cmd & 0x80)
-	{
+	if (cmd & 0x80) {	/* ACMD<n> is the command sequense of CMD55-CMD<n> */
 		cmd &= 0x7F;
 		n = send_cmd(CMD55, 0);
-		if (n > 1)
-			return n;
+		if (n > 1) return n;
 	}
-*/
 
-
-	if (cmd & 0x80)
-	{
-		cmd2 = cmd & 0x7F;
-		arg2 = arg;
-		n = send_cmd(CMD55, 0);
-		if (n > 1)
-			return n;
-		cmd = cmd2;
-		arg = arg2;
+	/* Select the card and wait for ready except to stop multiple block read */
+	if (cmd != CMD12) {
+		deselect();
+		if (!select()) return 0xFF;
 	}
-	
-
-	// ASkr
-	// sets CS, "reads" one byte
-	deselect();
-	
-	// ASkr
-	// clears CS, "reads" one byte
-	if (!select())
-		return 0xFF;
 
 	/* Send a command packet */
 	buf[0] = 0x40 | cmd;			/* Start + Command index */
@@ -425,9 +405,7 @@ BYTE send_cmd(/* Returns command response (bit7==1:Send failed)*/
 	xmit_mmc(buf, 6);
 
 	/* Receive command response */
-	if (cmd == CMD12)
-		rcvr_mmc(&d, 1);	/* Skip a stuff byte when stop reading */
-
+	if (cmd == CMD12) rcvr_mmc(&d, 1);	/* Skip a stuff byte when stop reading */
 	n = 10;								/* Wait for a valid response in timeout of 10 attempts */
 	do
 		rcvr_mmc(&d, 1);
@@ -450,29 +428,12 @@ BYTE send_cmd(/* Returns command response (bit7==1:Send failed)*/
 /*-----------------------------------------------------------------------*/
 
 DSTATUS disk_status (
-	BYTE drv			/* Drive number (0) */
+	BYTE drv			/* Drive number (always 0) */
 )
 {
-	DSTATUS s = Stat;
+	if (drv) return STA_NOINIT;
 
-
-	if (drv || !INS) {
-		s = STA_NODISK | STA_NOINIT;
-	} else {
-		s &= ~STA_NODISK;
-    
-    // ASkr FIX write error, 5/2018
-    // This was the source of the WRITE ERROR, with newer Sourceboost
-    // versions. WP was defined as (0), but the code "s |= STA_PROTECT;"
-    // was always executed...
-		if (WP)
-			s |= STA_PROTECT;
-		else
-			s &= ~STA_PROTECT;
-	}
-	Stat = s;
-
-	return s;
+	return Stat;
 }
 
 
@@ -481,7 +442,7 @@ DSTATUS disk_status (
 /* Initialize Disk Drive                                                 */
 /*-----------------------------------------------------------------------*/
 
-DSTATUS disk_initialize(
+DSTATUS disk_initialize (
 	BYTE drv		/* Physical drive nmuber (0) */
 )
 {
@@ -490,95 +451,46 @@ DSTATUS disk_initialize(
 	DSTATUS s;
 
 
-	pinInitSD();
+	if (drv) return RES_NOTRDY;
 
+	dly_us(10000);			/* 10ms */
+	CS_INIT(); CS_H();		/* Initialize port pin tied to CS */
+	CK_INIT(); CK_L();		/* Initialize port pin tied to SCLK */
+	DI_INIT();				/* Initialize port pin tied to DI */
+	DO_INIT();				/* Initialize port pin tied to DO */
 
-  // ASkr TODO: FIX BROKEN SAVE
-  // SPI protocol looks good, no difference to a working version (old Sourceboost).
-  // Looks more like a SW issue. Possible stack corruption/overflow/whatever?
-  
-  
-	s = disk_status(drv);
-	if (s & STA_NODISK)
-		return s;
+	for (n = 10; n; n--) rcvr_mmc(buf, 1);	/* Apply 80 dummy clocks and the card gets ready to receive command */
 
-
-	// CS HIGH
-	CS_H();
-	
-	
-	// 80 CLOCK PULSES
-	for (n = 10; n; n--)
-		rcvr_mmc(buf, 1);
-
-
-	// SEND CMD0
 	ty = 0;
-	if (send_cmd(CMD0, 0) == 1)
-	{
-	
-		// enter idle state
-		if (send_cmd(CMD8, 0x1AA) == 1)
-		{
-			
-			// SDv2?
+	if (send_cmd(CMD0, 0) == 1) {			/* Enter Idle state */
+		if (send_cmd(CMD8, 0x1AA) == 1) {	/* SDv2? */
 			rcvr_mmc(buf, 4);							/* Get trailing return value of R7 resp */
-		
-			if (buf[2] == 0x01 && buf[3] == 0xAA)
-			{ /* The card can work at vdd range of 2.7-3.6V */
-				for (tmr = 1000; tmr; tmr--)
-				{ /* Wait for leaving idle state (ACMD41 with HCS bit) */
-					if (send_cmd(ACMD41, 1UL << 30) == 0)
-						break;
-					DLY_US(1000);
+			if (buf[2] == 0x01 && buf[3] == 0xAA) {		/* The card can work at vdd range of 2.7-3.6V */
+				for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state (ACMD41 with HCS bit) */
+					if (send_cmd(ACMD41, 1UL << 30) == 0) break;
+					dly_us(1000);
 				}
-				
-				if (tmr && send_cmd(CMD58, 0) == 0)
-				{	/* Check CCS bit in the OCR */
+				if (tmr && send_cmd(CMD58, 0) == 0) {	/* Check CCS bit in the OCR */
 					rcvr_mmc(buf, 4);
 					ty = (buf[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2;	/* SDv2 */
 				}
 			}
-		}
-		else
-		{	/* SDv1 or MMCv3 */
-			
-			if (send_cmd(ACMD41, 0) <= 1)
-			{
-				ty = CT_SD1;
-				cmd = ACMD41;	/* SDv1 */
-	
+		} else {							/* SDv1 or MMCv3 */
+			if (send_cmd(ACMD41, 0) <= 1) 	{
+				ty = CT_SD1; cmd = ACMD41;	/* SDv1 */
+			} else {
+				ty = CT_MMC; cmd = CMD1;	/* MMCv3 */
 			}
-			else
-			{
-				ty = CT_MMC;
-				cmd = CMD1;	/* MMCv3 */
-				
+			for (tmr = 1000; tmr; tmr--) {			/* Wait for leaving idle state */
+				if (send_cmd(cmd, 0) == 0) break;
+				dly_us(1000);
 			}
-			
-			
-			for (tmr = 1000; tmr; tmr--)
-			{	/* Wait for leaving idle state */
-				
-				if (send_cmd(ACMD41, 0) == 0)
-					break;
-				DLY_US(1000);
-			}
-			
 			if (!tmr || send_cmd(CMD16, 512) != 0)	/* Set R/W block length to 512 */
 				ty = 0;
 		}
 	}
-	
-	
-	
 	CardType = ty;
-	if (ty)		/* Initialization succeded */
-		s &= ~STA_NOINIT;
-	else		/* Initialization failed */
-		s |= STA_NOINIT;
-
-		
+	s = ty ? 0 : STA_NOINIT;
 	Stat = s;
 
 	deselect();
@@ -596,46 +508,22 @@ DRESULT disk_read (
 	BYTE drv,			/* Physical drive nmuber (0) */
 	BYTE *buff,			/* Pointer to the data buffer to store read data */
 	DWORD sector,		/* Start sector number (LBA) */
-	BYTE count			/* Sector count (1..128) */
+	UINT count			/* Sector count (1..128) */
 )
 {
-	DSTATUS s;
+	BYTE cmd;
 
 
-	s = disk_status(drv);
-	if (s & STA_NOINIT)
-		return RES_NOTRDY;
-		
+	if (disk_status(drv) & STA_NOINIT) return RES_NOTRDY;
+	if (!(CardType & CT_BLOCK)) sector *= 512;	/* Convert LBA to byte address if needed */
 
-	if (!count)
-		return RES_PARERR;
-
-
-	if (!(CardType & CT_BLOCK))
-		sector *= 512;	/* Convert LBA to byte address if needed */
-
-	if (count == 1)
-	{	/* Single block read */
-		
-		if ((send_cmd(CMD17, sector) == 0) && rcvr_datablock(buff, 512))
-			count = 0;
-			
-	}
-	else
-	{	/* Multiple block read */
-		
-		if (send_cmd(CMD18, sector) == 0)
-		{	/* READ_MULTIPLE_BLOCK */
-		
-			do
-			{
-			
-				if (!rcvr_datablock(buff, 512)) break;
-				buff += 512;
-			} while (--count);
-			send_cmd(CMD12, 0);				/* STOP_TRANSMISSION */
-		}
-		
+	cmd = count > 1 ? CMD18 : CMD17;			/*  READ_MULTIPLE_BLOCK : READ_SINGLE_BLOCK */
+	if (send_cmd(cmd, sector) == 0) {
+		do {
+			if (!rcvr_datablock(buff, 512)) break;
+			buff += 512;
+		} while (--count);
+		if (cmd == CMD18) send_cmd(CMD12, 0);	/* STOP_TRANSMISSION */
 	}
 	deselect();
 
@@ -652,16 +540,10 @@ DRESULT disk_write (
 	BYTE drv,			/* Physical drive nmuber (0) */
 	const BYTE *buff,	/* Pointer to the data to be written */
 	DWORD sector,		/* Start sector number (LBA) */
-	BYTE count			/* Sector count (1..128) */
+	UINT count			/* Sector count (1..128) */
 )
 {
-	DSTATUS s;
-
-
-	s = disk_status(drv);
-	if (s & STA_NOINIT) return RES_NOTRDY;
-	if (s & STA_PROTECT) return RES_WRPRT;
-	if (!count) return RES_PARERR;
+	if (disk_status(drv) & STA_NOINIT) return RES_NOTRDY;
 	if (!(CardType & CT_BLOCK)) sector *= 512;	/* Convert LBA to byte address if needed */
 
 	if (count == 1) {	/* Single block write */
@@ -686,7 +568,6 @@ DRESULT disk_write (
 }
 
 
-
 /*-----------------------------------------------------------------------*/
 /* Miscellaneous Functions                                               */
 /*-----------------------------------------------------------------------*/
@@ -699,30 +580,26 @@ DRESULT disk_ioctl (
 {
 	DRESULT res;
 	BYTE n, csd[16];
-	WORD cs;
+	DWORD cs;
 
 
-	if (disk_status(drv) & STA_NOINIT)					/* Check if card is in the socket */
-		return RES_NOTRDY;
+	if (disk_status(drv) & STA_NOINIT) return RES_NOTRDY;	/* Check if card is in the socket */
 
 	res = RES_ERROR;
 	switch (ctrl) {
 		case CTRL_SYNC :		/* Make sure that no pending write process */
-			if (select()) {
-				deselect();
-				res = RES_OK;
-			}
+			if (select()) res = RES_OK;
 			break;
 
 		case GET_SECTOR_COUNT :	/* Get number of sectors on the disk (DWORD) */
 			if ((send_cmd(CMD9, 0) == 0) && rcvr_datablock(csd, 16)) {
 				if ((csd[0] >> 6) == 1) {	/* SDC ver 2.00 */
-					cs= csd[9] + ((WORD)csd[8] << 8) + 1;
-					*(DWORD*)buff = (DWORD)cs << 10;
+					cs = csd[9] + ((WORD)csd[8] << 8) + ((DWORD)(csd[7] & 63) << 16) + 1;
+					*(DWORD*)buff = cs << 10;
 				} else {					/* SDC ver 1.XX or MMC */
 					n = (csd[5] & 15) + ((csd[10] & 128) >> 7) + ((csd[9] & 3) << 1) + 2;
 					cs = (csd[8] >> 6) + ((WORD)csd[7] << 2) + ((WORD)(csd[6] & 3) << 10) + 1;
-					*(DWORD*)buff = (DWORD)cs << (n - 9);
+					*(DWORD*)buff = cs << (n - 9);
 				}
 				res = RES_OK;
 			}
@@ -741,4 +618,5 @@ DRESULT disk_ioctl (
 
 	return res;
 }
+
 

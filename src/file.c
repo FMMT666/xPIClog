@@ -64,7 +64,7 @@ schar filOpenAppendClose(uchar *fname)
 		return 0;
 
 	// MOUNT
-	rc = f_mount(0, (FATFS *)&fatfs);
+	rc = f_mount( (FATFS *)&fatfs, "", 1 );
 	if (rc)
 		return -1;
 
@@ -72,7 +72,7 @@ schar filOpenAppendClose(uchar *fname)
 	rc = f_open(&fil, fname, FA_WRITE | FA_OPEN_ALWAYS);
 	if (rc)
 	{
-		f_mount(0, NULL);
+		f_mount( NULL, "", 1 );
 		return -2;
 	}
 
@@ -81,7 +81,7 @@ schar filOpenAppendClose(uchar *fname)
 	if (rc)
 	{
 		f_close(&fil);
-		f_mount(0, NULL);
+		f_mount( NULL, "", 1 );
 		return -3;
 	}
 
@@ -144,7 +144,7 @@ schar filOpenAppendClose(uchar *fname)
 	}
 
 	f_close(&fil);
-	f_mount(0, NULL);
+	f_mount( NULL, "", 1 );
 	
 	if( rc )
 		return -4;
@@ -173,7 +173,7 @@ schar filParseConfig(uchar *fname)
 		return -1;
 
 	// MOUNT
-	rc = f_mount(0, (FATFS *)&fatfs);
+	rc = f_mount( (FATFS *)&fatfs, "", 1 );
 	if (rc)
 		return -2;
 
@@ -181,7 +181,7 @@ schar filParseConfig(uchar *fname)
 	rc = (FRESULT)f_open(&fil, fname, FA_READ | FA_OPEN_EXISTING);
 	if( rc > FR_OK )
 	{
-		f_mount(0, NULL);
+		f_mount( NULL, "", 1 );
 		return -3;
 	}
 
@@ -206,7 +206,7 @@ schar filParseConfig(uchar *fname)
 	}
 	
 	f_close(&fil);
-	f_mount(0, NULL);
+	f_mount( NULL, "", 1 );
 
 	serRXBufFlushIn();
 	
@@ -310,7 +310,7 @@ schar filCreateConfig(uchar *fname)
 		return -1;
 
 	// MOUNT
-	rc = f_mount(0, (FATFS *)&fatfs);
+	rc = f_mount( (FATFS *)&fatfs, "", 1 );
 	if (rc)
 		return -2;
 
@@ -318,7 +318,7 @@ schar filCreateConfig(uchar *fname)
 	rc = (FRESULT)f_open(&fil, fname, FA_WRITE | FA_CREATE_ALWAYS);
 	if( rc > FR_OK )
 	{
-		f_mount(0, NULL);
+		f_mount( NULL, "", 1 );
 		return -3;
 	}
 
@@ -361,7 +361,7 @@ schar filCreateConfig(uchar *fname)
 	serFileStringDebug(&fil, "bgcorr=", (long)sCfg.meaBandCorr, "\r\n");
 	
 	f_close(&fil);
-	f_mount(0, NULL);
+	f_mount( NULL, "", 1 );
 
 	if( rc )
 		return -4;

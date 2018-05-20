@@ -13,7 +13,7 @@
 !main_01.c
 !meas.c
 !meas.h
-!mmcbb.c
+!sdmm.c
 !pinctrl.c
 !pinctrl.h
 !rtc.c

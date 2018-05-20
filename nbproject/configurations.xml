@@ -23,10 +23,10 @@
       <itemPath>src/int.c</itemPath>
       <itemPath>src/main_01.c</itemPath>
       <itemPath>src/meas.c</itemPath>
-      <itemPath>src/mmcbb.c</itemPath>
       <itemPath>src/pinctrl.c</itemPath>
       <itemPath>src/rtc.c</itemPath>
       <itemPath>src/serial.c</itemPath>
+      <itemPath>src/sdmm.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
