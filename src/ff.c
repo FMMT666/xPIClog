@@ -3574,10 +3574,18 @@ FRESULT f_open (
 	/* Get logical drive number */
 	mode &= FF_FS_READONLY ? FA_READ : FA_READ | FA_WRITE | FA_CREATE_ALWAYS | FA_CREATE_NEW | FA_OPEN_ALWAYS | FA_OPEN_APPEND;
 	res = find_volume(&path, &fs, mode);
+  
+  // ASkr DEBUG ONLY
+  serSendStringDebug("*** find_volume: ", res, "\r\n");
+  
 	if (res == FR_OK) {
 		dj.obj.fs = fs;
 		INIT_NAMBUF(fs);
 		res = follow_path(&dj, path);	/* Follow the file path */
+    
+    // ASkr DEBUG ONLY
+    serSendStringDebug("*** follow_path: ", res, "\r\n");
+    
 #if !FF_FS_READONLY	/* Read/Write configuration */
 		if (res == FR_OK) {
 			if (dj.fn[NSFLAG] & NS_NONAME) {	/* Origin directory itself? */
