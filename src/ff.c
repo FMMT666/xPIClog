@@ -1,3 +1,7 @@
+
+// ASkr 3/2011, 5/2018
+// SourceBoost & PIC18 mods
+
 /*----------------------------------------------------------------------------/
 /  FatFs - Generic FAT Filesystem Module  R0.13b                              /
 /-----------------------------------------------------------------------------/
@@ -3527,6 +3531,13 @@ FRESULT f_mount (
 		if (!ff_cre_syncobj((BYTE)vol, &fs->sobj)) return FR_INT_ERR;
 #endif
 	}
+  
+  // ASkr TODO: that was in the ff08b code
+//  else
+//    pinExitSD();
+
+  
+  
 	FatFs[vol] = fs;					/* Register new fs object */
 
 	if (opt == 0) return FR_OK;			/* Do not mount now, it will be mounted later */

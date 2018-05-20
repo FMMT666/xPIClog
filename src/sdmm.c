@@ -1,3 +1,7 @@
+
+// ASkr 3/2011, 5/2018:
+// SourceBoost & PIC18 mods
+
 /*------------------------------------------------------------------------/
 /  Foolproof MMCv3/SDv1/SDv2 (in SPI mode) control module
 /-------------------------------------------------------------------------/
@@ -379,13 +383,28 @@ BYTE send_cmd (		/* Returns command response (bit7==1:Send failed)*/
 {
 	BYTE n, d, buf[6];
 
+ 	// ASkr SourceBoost fix
+	BYTE cmd2;
+	DWORD arg2;
 
-	if (cmd & 0x80) {	/* ACMD<n> is the command sequense of CMD55-CMD<n> */
-		cmd &= 0x7F;
+	// CHANGED by ASkr; THIS DOES NOT WORK WITH SOURCEBOOST!
+//	if (cmd & 0x80) {	/* ACMD<n> is the command sequense of CMD55-CMD<n> */
+//		cmd &= 0x7F;
+//		n = send_cmd(CMD55, 0);
+//		if (n > 1) return n;
+//	}
+	if (cmd & 0x80)
+	{
+		cmd2 = cmd & 0x7F;
+		arg2 = arg;
 		n = send_cmd(CMD55, 0);
-		if (n > 1) return n;
+		if (n > 1)
+			return n;
+		cmd = cmd2;
+		arg = arg2;
 	}
 
+  
 	/* Select the card and wait for ready except to stop multiple block read */
 	if (cmd != CMD12) {
 		deselect();

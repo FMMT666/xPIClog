@@ -179,6 +179,10 @@ schar filParseConfig(uchar *fname)
 
 	// OPEN
 	rc = (FRESULT)f_open(&fil, fname, FA_READ | FA_OPEN_EXISTING);
+
+  // ASkr DEBUG ONLY
+  serSendStringDebug("*** OPEN ERROR: ", rc, "\r\n");
+
 	if( rc > FR_OK )
 	{
 		f_mount( NULL, "", 1 );
@@ -194,6 +198,16 @@ schar filParseConfig(uchar *fname)
 	{
 		// read one line from the config file
 		pline = f_gets((uchar *)&cline, RXBUFSIZE, &fil);
+
+    
+    // ASkr DEBUG ONLY
+		if( pline == NULL )
+      serSendString("*** pline == NULL\r\n");
+    else
+      serSendString(cline);
+      
+    
+    
 		if( pline == NULL )
 			continue;
 
